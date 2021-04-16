@@ -1,0 +1,1 @@
+from gym_nav2d.envs.nav2d_sparse import NaviSparseEnv

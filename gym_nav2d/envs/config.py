@@ -1,0 +1,8 @@
+import numpy as np
+
+ZERO_POINT = 0.0
+FIELD_LENGTH = 30
+FIELD_WIDTH = 30
+
+MIN_SPEED = 0
+MAX_SPEED = 5
