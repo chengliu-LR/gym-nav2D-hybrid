@@ -23,3 +23,8 @@ python3 -m pip install -e '.[gym-nav2D-hybrid]'
 import gym, gym_nav2d
 env = gym.make('nav2d-v0') # env id
 ```
+
+## TODO
+- [ ] Implement `step()` method
+- [ ] Implement `reset()` method
+- [ ] More reasonable observation_space and action_space

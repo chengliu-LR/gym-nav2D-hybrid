@@ -69,8 +69,11 @@ class NaviSparseEnv(gym.Env):
     def render(self, mode='human'):
         self._initialse_window()
         # window, color, position, radius_of_circle
-        pygame.draw.circle(self.window, self.__red, (50, 50), 10)
-        pygame.display.update()
+        for i in range(200):
+            self.__background.fill(pygame.Color(0, 125, 0, 0))
+            pygame.draw.circle(self.window, self.__white, (50+i, 50), 10)
+            pygame.display.update()
+        return
 
     def close(self):
         pass
