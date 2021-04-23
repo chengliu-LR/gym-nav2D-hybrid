@@ -6,7 +6,5 @@ setup(
     description='Navigation domain OpenAI Gym environment',
     author='Cheng Liu',
     packages=['gym_nav2d'],
-    install_requires=['gym',
-                      'numpy',
-                      'pygame']
+    install_requires=['gym', 'numpy', 'pygame']
 )

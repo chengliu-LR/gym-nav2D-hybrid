@@ -1,3 +1,5 @@
+############## TODO: add state whether landed ###############
+
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
@@ -30,7 +32,7 @@ LOW_VECTOR = [
 ]
 
 HIGH_VECTOR = [
-    np.array([FIELD_LENGTH, FIELD_WIDTH]), 
+    np.array([FIELD_LENGTH, FIELD_WIDTH]),
     np.array([MAX_SPEED]), 
     np.array([np.pi])
 ]
@@ -53,7 +55,6 @@ class NaviSparseEnv(gym.Env):
         self.observation_space = spaces.Tuple(
                 tuple(spaces.Box(LOW_VECTOR[i], HIGH_VECTOR[i], dtype=np.float64) for i in range(len(LOW_VECTOR)))
         )
-        # TODO: state whether landed
 
         # visualiser
         self.VISUALISER_SCALE_FACTOR = 20
