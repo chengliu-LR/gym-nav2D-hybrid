@@ -7,7 +7,7 @@ A UAV 2D navigation environment with hybrid action space built on OpenAI gym.
 + python 3.5+
 + gym 0.10.5
 + pygame 1.9.4
-+ numpy
++ numpy 1.19.5
 
 ## Installation
 
