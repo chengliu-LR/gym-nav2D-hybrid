@@ -5,7 +5,7 @@ taken from the robot soccer server manual 7.07.
 import numpy as np
 
 PLAYER_CONFIG = {
-    'POWER_RATE': 0.006,
+    'POWER_RATE': 0.006,    # rate parameter multiplied to the real power
     'SIZE': 0.9,
     'RAND': 0.1,
     'ACCEL_MAX': 1.0,
@@ -26,7 +26,7 @@ BALL_CONFIG = {
 
 MINPOWER = -100
 MAXPOWER = 100
-KICKABLE = PLAYER_CONFIG['SIZE'] + 0.7
+KICKABLE = AGENT_CONFIG['SIZE'] + 0.7
 CATCHABLE = 2.0
 CATCH_PROBABILITY = 1.0
 INERTIA_MOMENT = 5.0

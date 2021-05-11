@@ -110,6 +110,7 @@ class GoalEnv(gym.Env):
         """
         act_index = action[0]
         act = ACTION_LOOKUP[act_index]
+        # pick up the one param corresponding to the discrete action index
         param = action[1][act_index]
         param = np.clip(param, PARAMETERS_MIN[act_index], PARAMETERS_MAX[act_index])
 
@@ -155,6 +156,7 @@ class GoalEnv(gym.Env):
             self.goalie.orientation,
             self.ball.position.copy()])
         self.render_states.append(self.states[-1])
+        # the action is only performed on player
         self._perform_action(act, param, self.player)
         self.goalie.move(self.ball, self.player)
         for entity in self.entities:
@@ -481,7 +483,7 @@ class Entity:
         self.accel_max = config['ACCEL_MAX']
         self.speed_max = config['SPEED_MAX']
         self.power_rate = config['POWER_RATE']
-        self.decay = config['DECAY']
+        self.decay = config['DECAY']    # velocity decay
         self.size = config['SIZE']
         self.position = np.array([0., 0.])
         self.velocity = np.array([0., 0.])
