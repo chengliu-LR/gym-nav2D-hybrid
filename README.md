@@ -7,7 +7,7 @@ A UAV 2D navigation environment with hybrid action space built on OpenAI gym.
 + python 3.5+
 + gym 0.10.5
 + pygame 1.9.4
-+ numpy
++ numpy 1.19.5
 
 ## Installation
 
@@ -23,3 +23,8 @@ python3 -m pip install -e '.[gym-nav2D-hybrid]'
 import gym, gym_nav2d
 env = gym.make('nav2d-v0') # env id
 ```
+
+## TODO
+- [ ] Implement `step()` method
+- [ ] Implement `reset()` method
+- [ ] More reasonable observation_space and action_space
