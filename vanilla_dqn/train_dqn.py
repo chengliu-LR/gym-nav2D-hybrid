@@ -139,7 +139,7 @@ logger = open('./logs/reward_logger.txt', 'w+')
 for epoch in range(num_episodes):
     env = gym.make('nav2d-v0')
     # env initial states
-    initial_position = np.array([env.FIELD_LENGTH / 2, env.FIELD_WIDTH / 2])
+    initial_position = np.array([env.FIELD_HEIGHT / 2, env.FIELD_WIDTH / 2])
     state = torch.from_numpy(env.reset(initial_position, np.random.normal(loc=0, scale=2*np.pi))).unsqueeze(0).float().to(device)
     done = False
     #until the game is end
