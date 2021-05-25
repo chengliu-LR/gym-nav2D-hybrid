@@ -1,8 +1,8 @@
 import numpy as np
 
 ZERO_POINT = 0.0
-FIELD_LENGTH = 15
 FIELD_WIDTH = 15
+FIELD_HEIGHT = 15
 
 GOAL_AREA = 5
 
