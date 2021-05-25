@@ -6,7 +6,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 import pygame
 import numpy as np
-from .config import AGENT_CONFIG, ZERO_POINT, FIELD_WIDTH, FIELD_LENGTH, MIN_SPEED, MAX_SPEED, INERTIA_MOMENT, MAX_POWER, MIN_POWER, GOAL_AREA
+from .config import AGENT_CONFIG, ZERO_POINT, FIELD_WIDTH, FIELD_HEIGHT, MIN_SPEED, MAX_SPEED, INERTIA_MOMENT, MAX_POWER, MIN_POWER, GOAL_AREA
 from .util import angle_to_pos, norm_angle, norm
 
 # actions
@@ -35,7 +35,7 @@ LOW_VECTOR = [
 ]
 
 HIGH_VECTOR = [
-    np.array([FIELD_LENGTH]),
+    np.array([FIELD_HEIGHT]),
     np.array([FIELD_WIDTH]),
     np.array([MAX_SPEED]),
     np.array([MAX_SPEED]),
@@ -68,7 +68,7 @@ class NaviSparseEnv(gym.Env):
         self.VISUALISER_SCALE_FACTOR = 20
         # env config
         self.FIELD_WIDTH = FIELD_WIDTH
-        self.FIELD_LENGTH = FIELD_LENGTH
+        self.FIELD_HEIGHT = FIELD_HEIGHT
 
     def step(self, action):
         """
@@ -143,8 +143,8 @@ class NaviSparseEnv(gym.Env):
         # initialise visualiser
         if self.window is None:
             pygame.init()
-            width = self.__visualiser_scale(FIELD_WIDTH)
-            height = self.__visualiser_scale(FIELD_LENGTH)
+            width = self._visualiser_scale(self.FIELD_WIDTH)
+            height = self._visualiser_scale(self.FIELD_HEIGHT)
             self.window = pygame.display.set_mode((width, height))
             self.__clock = pygame.time.Clock()
             size = (width, height)
@@ -154,15 +154,17 @@ class NaviSparseEnv(gym.Env):
             self.__red = pygame.Color(255, 0, 0, 0)
             self.__background.fill(pygame.Color(0, 125, 0, 0))
 
-            start_pos = (self.VISUALISER_SCALE_FACTOR * 16, self.VISUALISER_SCALE_FACTOR * 16)
-            end_pos_l = (self.VISUALISER_SCALE_FACTOR * 20, self.VISUALISER_SCALE_FACTOR * 16)
-            end_pos_w = (self.VISUALISER_SCALE_FACTOR * 16, self.VISUALISER_SCALE_FACTOR * 20)
+            goal_top_left = (self._visualiser_scale(self.FIELD_WIDTH - GOAL_AREA),
+                             self._visualiser_scale(self.FIELD_HEIGHT - GOAL_AREA))  # (x, y)
+            goal_top_right = (width, self._visualiser_scale(self.FIELD_HEIGHT - GOAL_AREA))
+            goal_botton_left = (self._visualiser_scale(self.FIELD_WIDTH - GOAL_AREA), height)
+
             pygame.draw.line(self.window,
-                            self.__white, start_pos, end_pos_l, width=5)
+                            self.__white, goal_top_left, goal_top_right, width=5)
             pygame.draw.line(self.window,
-                            self.__white, start_pos, end_pos_w, width=5)
+                            self.__white, goal_top_left, goal_botton_left, width=5)
     
-    def __visualiser_scale(self, value):
+    def _visualiser_scale(self, value):
         ''' Scale up a value. '''
         return int(self.VISUALISER_SCALE_FACTOR * value)
 
@@ -245,9 +247,9 @@ class Agent(Entity):
         self.accelerate(power, self.orientation)
     
     def goal_achieved(self):
-        return self.in_area(FIELD_LENGTH - GOAL_AREA, FIELD_LENGTH,
-                            FIELD_LENGTH - GOAL_AREA, FIELD_LENGTH)
+        return self.in_area(FIELD_HEIGHT - GOAL_AREA, FIELD_HEIGHT,
+                            FIELD_HEIGHT - GOAL_AREA, FIELD_HEIGHT)
     
     def in_field(self):
-        return self.in_area(0, FIELD_LENGTH,
-                            0, FIELD_LENGTH)
+        return self.in_area(0, FIELD_HEIGHT,
+                            0, FIELD_HEIGHT)
