@@ -1,6 +1,7 @@
-############## TODO: add state whether landed ###############
+############## TODO: Discretize ###############
 
 import gym
+gym.logger.set_level(40)
 from gym import error, spaces, utils
 from gym.utils import seeding
 import pygame
@@ -16,23 +17,27 @@ ACTION_LOOKUP = {
 
 # field bounds and turning angles
 PARAMETERS_MIN = [
-    np.array([MAX_POWER]),
-    np.array([-np.pi / 36])
+    np.array([MIN_POWER]),
+    np.array([-np.pi / 12])
 ]
 
 PARAMETERS_MAX = [
-    np.array([MIN_POWER]),  # width: vertical
-    np.array([np.pi / 36])
+    np.array([MAX_POWER]),  # width: vertical
+    np.array([np.pi / 12])
 ]
 
 LOW_VECTOR = [
-    np.array([ZERO_POINT, ZERO_POINT]), # position
-    np.array([MIN_SPEED]),  # velocity
+    np.array([ZERO_POINT]), # position x
+    np.array([ZERO_POINT]), # position y
+    np.array([MIN_SPEED]),  # velocity x
+    np.array([MIN_SPEED]),  # velocity y
     np.array([-np.pi])  # orientation
 ]
 
 HIGH_VECTOR = [
-    np.array([FIELD_LENGTH, FIELD_WIDTH]),
+    np.array([FIELD_LENGTH]),
+    np.array([FIELD_WIDTH]),
+    np.array([MAX_SPEED]),
     np.array([MAX_SPEED]),
     np.array([np.pi])
 ]
@@ -46,17 +51,17 @@ class NaviSparseEnv(gym.Env):
         self.num_actions = len(ACTION_LOOKUP)
 
         self.time_step = 0
-        self.max_time_step = 200
+        self.max_time_step = 100
 
         self.action_space = spaces.Tuple((
             spaces.Discrete(self.num_actions),
             spaces.Tuple(
-                tuple(spaces.Box(PARAMETERS_MIN[i], PARAMETERS_MAX[i], dtype=np.float64) for i in range(self.num_actions))
+                tuple(spaces.Box(PARAMETERS_MIN[i], PARAMETERS_MAX[i], dtype=np.float32) for i in range(self.num_actions))
             )
         ))
         # state = (x_cordinate, y_cordinate, speed, orientation)
         self.observation_space = spaces.Tuple(
-                tuple(spaces.Box(LOW_VECTOR[i], HIGH_VECTOR[i], dtype=np.float64) for i in range(len(LOW_VECTOR)))
+                tuple(spaces.Box(LOW_VECTOR[i], HIGH_VECTOR[i], dtype=np.float32) for i in range(len(LOW_VECTOR)))
         )
 
         # visualiser
@@ -72,12 +77,12 @@ class NaviSparseEnv(gym.Env):
         """
         act_index = action[0]
         act = ACTION_LOOKUP[act_index]
-        param = action[1][act_index] # parameters corresponding to choose discrete action
+        param = action[1][act_index] #parameters corresponding to chosen discrete action
         param = np.clip(param, PARAMETERS_MIN[act_index], PARAMETERS_MAX[act_index])
 
         self.time_step += 1
         if self.time_step == self.max_time_step:
-            reward = -1
+            reward = -20
             end_episode = True
             state = self.get_state()
             return state, reward, end_episode, {}
@@ -104,18 +109,19 @@ class NaviSparseEnv(gym.Env):
     def terminal_check(self):
         if self.agent.goal_achieved():
             end_episode = True
-            reward = 1
+            reward = 50
         elif not self.agent.in_field():
             end_episode = True
-            reward = -1
+            # risk suboptim
+            reward = -20
         else:
             end_episode = False
-            reward = 0
+            reward = -1
         return reward, end_episode
 
     def reset(self, position, orientation):
         self.agent = Agent(position, orientation)
-        return self.get_state(), 0  # return state and reward (0)
+        return self.get_state() # return state
 
     def get_state(self):
         state = np.concatenate((
@@ -129,7 +135,7 @@ class NaviSparseEnv(gym.Env):
         # window, color, position, radius_of_circle
         pygame.draw.circle(self.window,
                         self.__red, self.VISUALISER_SCALE_FACTOR * self.agent.position,
-                        10)
+                        8)
     
         pygame.display.update()
 
@@ -147,10 +153,50 @@ class NaviSparseEnv(gym.Env):
             self.__black = pygame.Color(0, 0, 0, 0)
             self.__red = pygame.Color(255, 0, 0, 0)
             self.__background.fill(pygame.Color(0, 125, 0, 0))
+
+            start_pos = (self.VISUALISER_SCALE_FACTOR * 16, self.VISUALISER_SCALE_FACTOR * 16)
+            end_pos_l = (self.VISUALISER_SCALE_FACTOR * 20, self.VISUALISER_SCALE_FACTOR * 16)
+            end_pos_w = (self.VISUALISER_SCALE_FACTOR * 16, self.VISUALISER_SCALE_FACTOR * 20)
+            pygame.draw.line(self.window,
+                            self.__white, start_pos, end_pos_l, width=5)
+            pygame.draw.line(self.window,
+                            self.__white, start_pos, end_pos_w, width=5)
     
     def __visualiser_scale(self, value):
         ''' Scale up a value. '''
         return int(self.VISUALISER_SCALE_FACTOR * value)
+
+    ####### for discrete action space ########
+    def step_discrete(self, act_index):
+        """
+        action: (int) discrete_action_index
+        Returns: (tuple) (ob, reward, end_episode, info)
+        """
+        if act_index == 0:
+            act = 'FORWARD'
+            param = np.array([MAX_POWER])
+        elif act_index == 1:
+            act = 'TURN'
+            param = np.array([np.pi / 12])
+        elif act_index == 2:
+            act = 'TURN'
+            param = np.array([-np.pi / 12])
+        else:
+            print("action index out of range.")
+
+        self.time_step += 1
+        if self.time_step == self.max_time_step:
+            reward = -20
+            end_episode = True
+            state = self.get_state()
+            return state, reward, end_episode, {}
+        
+        end_episode = False
+        reward, end_episode = self.update(act, param)
+        state = self.get_state()
+
+        return state, reward, end_episode, {}
+
 
 class Entity():
     """ Base entity class, representing moving objects like quads or other types of drones. """
