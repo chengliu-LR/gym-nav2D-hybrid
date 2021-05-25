@@ -65,7 +65,7 @@ def evaluation(random_enabled):
     for epoch in range(num_episodes):
         env = gym.make('nav2d-v0')
         # env initial states
-        initial_position = np.array([env.FIELD_LENGTH / 2, env.FIELD_WIDTH / 2])
+        initial_position = np.array([env.FIELD_HEIGHT / 2, env.FIELD_WIDTH / 2])
         state = torch.from_numpy(env.reset(initial_position, np.random.normal(loc=0, scale=2*np.pi))).unsqueeze(0).float().to(device)
         done = False
         #until the game is end
@@ -89,7 +89,8 @@ def evaluation(random_enabled):
         #if epoch % 1 == 0:
         print('epoch:', epoch, 'accumulated reward:', episode_rewards[epoch])
 
-evaluation(random_enabled=False)
+# set random_enabled to True to see how random policy works
+evaluation(random_enabled=True)
 averaged_rewards = np.zeros(num_episodes)
 averaged_rewards[:] = episode_rewards[:].sum() / num_episodes
 print('Averaged reward among {} tests:'.format(num_episodes), episode_rewards[:].sum() / num_episodes)
