@@ -25,6 +25,7 @@ env = gym.make('nav2d-v0') # env id
 ```
 
 ## TODO
-- [ ] Implement `step()` method
-- [ ] Implement `reset()` method
-- [ ] More reasonable observation_space and action_space
+- [x] Implement `step()` method
+- [x] Implement `reset()` method
+- [x] More reasonable observation_space and action_space
+- [ ] P-DQN algorithm implementation
