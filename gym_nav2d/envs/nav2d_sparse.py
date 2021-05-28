@@ -1,5 +1,3 @@
-############## TODO: Discretize ###############
-
 import gym
 gym.logger.set_level(40)
 from gym import error, spaces, utils
@@ -42,6 +40,7 @@ HIGH_VECTOR = [
     np.array([np.pi])
 ]
 
+
 class NaviSparseEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     def __init__(self):
@@ -51,7 +50,7 @@ class NaviSparseEnv(gym.Env):
         self.num_actions = len(ACTION_LOOKUP)
 
         self.time_step = 0
-        self.max_time_step = 100
+        self.max_time_step = 50
 
         self.action_space = spaces.Tuple((
             spaces.Discrete(self.num_actions),
@@ -59,7 +58,7 @@ class NaviSparseEnv(gym.Env):
                 tuple(spaces.Box(PARAMETERS_MIN[i], PARAMETERS_MAX[i], dtype=np.float32) for i in range(self.num_actions))
             )
         ))
-        # state = (x_cordinate, y_cordinate, speed, orientation)
+        # state = (x_cordinate, y_cordinate, vel_x, vel_y, orientation)
         self.observation_space = spaces.Tuple(
                 tuple(spaces.Box(LOW_VECTOR[i], HIGH_VECTOR[i], dtype=np.float32) for i in range(len(LOW_VECTOR)))
         )
@@ -70,9 +69,12 @@ class NaviSparseEnv(gym.Env):
         self.FIELD_WIDTH = FIELD_WIDTH
         self.FIELD_HEIGHT = FIELD_HEIGHT
 
+        self.PARAMETERS_MIN = PARAMETERS_MIN
+        self.PARAMETERS_MAX = PARAMETERS_MAX
+
     def step(self, action):
         """
-        action: tuple of (int: discrete_action_index, tuple: params)
+        Action: tuple of (int: discrete_action_index, tuple: params)
         Returns: tuple (ob, reward, end_episode, info)
         """
         act_index = action[0]
@@ -82,7 +84,7 @@ class NaviSparseEnv(gym.Env):
 
         self.time_step += 1
         if self.time_step == self.max_time_step:
-            reward = -20
+            reward = -self.agent.normalized_goal_distance()
             end_episode = True
             state = self.get_state()
             return state, reward, end_episode, {}
@@ -109,14 +111,13 @@ class NaviSparseEnv(gym.Env):
     def terminal_check(self):
         if self.agent.goal_achieved():
             end_episode = True
-            reward = 50
+            reward = 50.0
         elif not self.agent.in_field():
             end_episode = True
-            # risk suboptim
-            reward = -20
+            reward = -20.0 - self.agent.normalized_goal_distance()
         else:
             end_episode = False
-            reward = -1
+            reward = -self.agent.normalized_goal_distance()
         return reward, end_episode
 
     def reset(self, position, orientation):
@@ -124,6 +125,7 @@ class NaviSparseEnv(gym.Env):
         return self.get_state() # return state
 
     def get_state(self):
+        """ Return 1-dim numpy array. """
         state = np.concatenate((
             self.agent.position,
             self.agent.velocity,
@@ -133,10 +135,7 @@ class NaviSparseEnv(gym.Env):
     def render(self, mode='human'):
         self._initialse_window()
         # window, color, position, radius_of_circle
-        pygame.draw.circle(self.window,
-                        self.__red, self.VISUALISER_SCALE_FACTOR * self.agent.position,
-                        8)
-    
+        pygame.draw.circle(self.window, self.__red, self.VISUALISER_SCALE_FACTOR * self.agent.position, 8)
         pygame.display.update()
 
     def _initialse_window(self):
@@ -188,7 +187,7 @@ class NaviSparseEnv(gym.Env):
 
         self.time_step += 1
         if self.time_step == self.max_time_step:
-            reward = -20
+            reward = -self.agent.normalized_goal_distance()
             end_episode = True
             state = self.get_state()
             return state, reward, end_episode, {}
@@ -221,7 +220,7 @@ class Entity():
         acceleration = self.power_rate * float(power) * angle_to_pos(theta)
         acceleration = np.clip(acceleration, -self.accel_max, self.accel_max)
         self.velocity += acceleration
-        self.velocity = np.clip(self.velocity, -self.speed_max, self.accel_max)
+        self.velocity = np.clip(self.velocity, -self.speed_max, self.speed_max)
     
     def in_area(self, left, right, bottom, top):
         xval, yval = self.position
@@ -234,13 +233,13 @@ class Agent(Entity):
         #super(Agent, self).__init__()
         Entity.__init__(self, AGENT_CONFIG)
         self.position = position
-        self.orientation = orientation
+        self.orientation = norm_angle(orientation)
     
     def turn(self, angle):
         moment = norm_angle(angle)
         speed = norm(self.velocity)
         angle = moment / (1 + INERTIA_MOMENT * speed)
-        self.orientation = self.orientation + angle
+        self.orientation = norm_angle(self.orientation + angle)
     
     def move_forward(self, power):
         power = np.clip(power, MIN_POWER, MAX_POWER)
@@ -253,3 +252,6 @@ class Agent(Entity):
     def in_field(self):
         return self.in_area(0, FIELD_HEIGHT,
                             0, FIELD_HEIGHT)
+    
+    def normalized_goal_distance(self):
+        return norm(self.position - np.array([FIELD_WIDTH, FIELD_HEIGHT])) / FIELD_HEIGHT
